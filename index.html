@@ -383,6 +383,60 @@ a{color:var(--blue);text-decoration:none}
 /* === V42 PROJECT SCHEDULE / MODULE DASHBOARD PATCH === */
 .v42-reminders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin:10px 0}.v42-reminder{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px;font-size:11px;font-weight:800;color:var(--ink);box-shadow:0 4px 14px rgba(13,42,82,.06)}.v42-reminder.warn{border-color:#fed7aa;background:#fff7ed;color:#9a3412}.v42-reminder.danger{border-color:#fecaca;background:#fff1f0;color:#991b1b}.v42-module-dash{display:none;margin:10px 0}.v42-module-dash.show{display:block}.v42-kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:10px}.v42-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px;box-shadow:0 4px 14px rgba(13,42,82,.06)}.v42-kpi small{display:block;font-size:9px;text-transform:uppercase;color:var(--muted);font-weight:900;letter-spacing:.06em}.v42-kpi b{display:block;font-size:22px;font-family:Outfit;margin-top:3px;color:var(--navy)}.v42-chart-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.v42-chart-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;min-height:170px}.v42-bars{display:flex;flex-direction:column;gap:8px}.v42-bar-row{display:grid;grid-template-columns:120px 1fr 40px;gap:8px;align-items:center;font-size:10.5px;font-weight:800}.v42-track{height:10px;background:#eef2fb;border-radius:999px;overflow:hidden}.v42-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:999px}.v42-toggle{margin-left:auto}.v42-gantt-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.v42-date-pill{display:inline-flex;align-items:center;border:1px solid var(--line);background:#f8fbff;border-radius:999px;padding:5px 10px;font-size:10px;font-weight:900;color:var(--navy)}.v42-gantt-table{width:100%;border-collapse:separate;border-spacing:0}.v42-gantt-table th,.v42-gantt-table td{padding:8px 10px;border-bottom:1px solid #edf2fb;font-size:11px;vertical-align:top}.v42-gantt-table th{background:#eef6ff;color:var(--navy);font-weight:900;text-align:left}.v42-gantt-row{display:grid;grid-template-columns:260px minmax(420px,1fr);gap:10px;align-items:center;border-bottom:1px solid #edf2fb;padding:9px 0}.v42-gantt-name{font-size:11px;font-weight:900;color:var(--navy);line-height:1.25}.v42-gantt-name small{display:block;color:var(--muted);font-weight:800;margin-top:3px}.v42-gantt-time{position:relative;height:32px;background:repeating-linear-gradient(90deg,#f8fbff 0,#f8fbff 34px,#edf4ff 35px);border:1px solid var(--line);border-radius:999px;overflow:hidden}.v42-gantt-bar{position:absolute;top:6px;height:18px;border-radius:999px;background:linear-gradient(90deg,#1268ff,#19bfd2);color:#fff;font-size:9px;font-weight:900;text-align:center;line-height:18px;min-width:14px}.v42-gantt-bar.critical{background:linear-gradient(90deg,#f04438,#f79009)}.v42-gantt-bar.milestone{width:16px!important;border-radius:4px;transform:rotate(45deg);background:#071f3d}.v42-gantt-range{font-size:10px;color:var(--muted);font-weight:800;margin-top:2px}.v42-cost-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.v42-cost-tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:10.5px;font-weight:900;cursor:pointer}.v42-cost-tabs button.active{background:var(--navy);color:#fff}.v42-hidden{display:none!important}@media(max-width:900px){.v42-chart-grid,.v42-gantt-row{grid-template-columns:1fr}.v42-gantt-time{min-width:520px}.v42-gantt-row{overflow:auto}.v42-bar-row{grid-template-columns:1fr}}
 
+
+/* === LAYOUT OVERFLOW FIX v1 === */
+/* Prevent long numbers/text from spilling out of cards/tables */
+.card, .metric, .kpi-box, .v42-chart-card, .v42-chart-card *, .tbl-wrap, .tbl-scroll, .dtbl, .dtbl td, .dtbl th {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Wrap long content */
+.dtbl td, .dtbl th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Allow wrapping for specific cells where needed */
+.dtbl td.wrap, .dtbl th.wrap {
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+/* Numbers: keep inside frame */
+.pct, .money {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Bars section: ensure grid doesn't exceed */
+.v42-bar-row {
+  grid-template-columns: minmax(90px, 140px) minmax(0, 1fr) minmax(52px, 74px) !important;
+}
+.v42-bar-row > * { min-width: 0; }
+.v42-track { min-width: 0; }
+
+/* Labels inside bars */
+.v42-bar-row span, .v42-bar-row div {
+  min-width: 0;
+}
+
+/* If a value is extremely long, clamp it */
+.v42-bar-row .v42-val, .v42-bar-row b {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+  .v42-chart-grid { grid-template-columns: 1fr !important; }
+  .v42-gantt-row { grid-template-columns: 1fr !important; }
+}
+/* === END LAYOUT OVERFLOW FIX v1 === */
 </style>
 
 <style>
@@ -14085,6 +14139,26 @@ function renderDashboard(){
     {lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya',cls:'kpi-flat'},
   ].map(k=>'<div class="kpi-box"><small>'+esc(k.lbl)+'</small><strong>'+k.val+'</strong><div class="kpi-sub '+k.cls+'">'+k.sub+'</div></div>').join('');
 
+  // Per-area KPI cards (for presentation)
+  // Shows each area: Actual cumulative, Plan cumulative, and Deviation
+  var areaKpis = areas.slice().sort().map(function(a){
+    var p = perArea[a].plan;
+    var ac = perArea[a].act;
+    var dv = ac - p;
+    var cls = dv >= 0 ? 'kpi-up' : 'kpi-down';
+    return '<div class="kpi-box">' +
+      '<small>' + esc(a) + '</small>' +
+      '<strong>' + fPct(ac) + '</strong>' +
+      '<div class="kpi-sub ' + cls + '">Plan ' + fPct(p) + ' | Dev ' + (dv>=0?'+':'') + fPct(dv) + '</div>' +
+    '</div>';
+  }).join('');
+  var areaWrap = '<div style="margin-top:10px">' +
+    '<div class="kpi-row" id="areaKpis">' + areaKpis + '</div>' +
+  '</div>';
+  // Insert right under the hero KPI row
+  var heroEl = document.getElementById('heroKpis');
+  if(heroEl && !document.getElementById('areaKpis')) heroEl.insertAdjacentHTML('afterend', areaWrap);
+
   // Metric grid
   var openOs=os.filter(x=>x.status==='Open').length;
   var matHigh=mat.filter(x=>x.criticality==='High').length;
@@ -14368,6 +14442,25 @@ function handleUniImport(file){
   }
 }
 
+
+
+/* === WEEKLY_IMPORT_APPEND_DEDUP_V1 === */
+function _wkLabel(v){
+  var s=String(v||'').trim();
+  if(!s)return '';
+  if(/^W\d+$/i.test(s))return s.toUpperCase();
+  if(/^\d+$/.test(s))return 'W'+s;
+  return s;
+}
+function _pwKey(r){
+  try{
+    var w=_wkLabel(r.week_no);
+    var pid=String(r.progress_id||'').trim();
+    if(pid) return w+'|'+pid;
+    return w+'|'+String(r.area||'').trim()+'|'+String(r.wbs_code||'').trim()+'|'+String(r.work_item||'').trim();
+  }catch(e){return ''; }
+}
+/* === END WEEKLY_IMPORT_APPEND_DEDUP_V1 === */
 function processImportRows(rawRows,fileName,log){
   var mod=S.mod;
   var existHdrs=hdrs(mod);
@@ -14389,7 +14482,21 @@ function processImportRows(rawRows,fileName,log){
     }
     var allEmpty=Object.values(row).every(v=>v===''||v===null||v===undefined);
     if(allEmpty){skipped++;return;}
-    db(mod).push(row);imported++;
+    if(mod==='progress_weekly'){
+      row.week_no=_wkLabel(row.week_no||row.week||row.weekno||row.week_number||'');
+      if(!row.week_no){skipped++;return;}
+      if(!window.__pwIndex){
+        window.__pwIndex={};
+        try{db('progress_weekly').forEach(function(x){var k=_pwKey(x);if(k)window.__pwIndex[k]=true;});}catch(e){}
+      }
+      var k=_pwKey(row);
+      if(k && window.__pwIndex[k]){skipped++;return;}
+      db(mod).push(row);
+      if(k)window.__pwIndex[k]=true;
+      imported++;
+    }else{
+      db(mod).push(row);imported++;
+    }
   });
   saveDB();renderModule();renderDashboard();
   log.innerHTML+='<span class="log-ok">[OK] Import selesai: '+imported+' baris diimport, '+skipped+' dilewati.</span>\n';
@@ -27895,7 +28002,21 @@ function processImportRows(rawRows,fileName,log){
     }
     var allEmpty=Object.values(row).every(v=>v===''||v===null||v===undefined);
     if(allEmpty){skipped++;return;}
-    db(mod).push(row);imported++;
+    if(mod==='progress_weekly'){
+      row.week_no=_wkLabel(row.week_no||row.week||row.weekno||row.week_number||'');
+      if(!row.week_no){skipped++;return;}
+      if(!window.__pwIndex){
+        window.__pwIndex={};
+        try{db('progress_weekly').forEach(function(x){var k=_pwKey(x);if(k)window.__pwIndex[k]=true;});}catch(e){}
+      }
+      var k=_pwKey(row);
+      if(k && window.__pwIndex[k]){skipped++;return;}
+      db(mod).push(row);
+      if(k)window.__pwIndex[k]=true;
+      imported++;
+    }else{
+      db(mod).push(row);imported++;
+    }
   });
   saveDB();renderModule();renderDashboard();
   log.innerHTML+='<span class="log-ok">[OK] Import selesai: '+imported+' baris diimport, '+skipped+' dilewati.</span>\n';
@@ -41591,7 +41712,21 @@ function processImportRows(rawRows,fileName,log){
     }
     var allEmpty=Object.values(row).every(v=>v===''||v===null||v===undefined);
     if(allEmpty){skipped++;return;}
-    db(mod).push(row);imported++;
+    if(mod==='progress_weekly'){
+      row.week_no=_wkLabel(row.week_no||row.week||row.weekno||row.week_number||'');
+      if(!row.week_no){skipped++;return;}
+      if(!window.__pwIndex){
+        window.__pwIndex={};
+        try{db('progress_weekly').forEach(function(x){var k=_pwKey(x);if(k)window.__pwIndex[k]=true;});}catch(e){}
+      }
+      var k=_pwKey(row);
+      if(k && window.__pwIndex[k]){skipped++;return;}
+      db(mod).push(row);
+      if(k)window.__pwIndex[k]=true;
+      imported++;
+    }else{
+      db(mod).push(row);imported++;
+    }
   });
   saveDB();renderModule();renderDashboard();
   log.innerHTML+='<span class="log-ok">[OK] Import selesai: '+imported+' baris diimport, '+skipped+' dilewati.</span>\n';
@@ -44506,6 +44641,223 @@ body.v11-file-mode .v11-file-note{display:block}
   function bootPatch(){ ensureMetaFields(); try{ if(window.saveDB) saveDB(); }catch(e){} }
   bootPatch();
   document.addEventListener('DOMContentLoaded',function(){setTimeout(bootPatch,900);setTimeout(bootPatch,2000);});
+})();
+</script>
+
+
+<script id="week-grouping-and-bulk-delete-v1">
+/* === WEEK GROUPING + CHECKBOX DELETE v1 ===
+   - For progress_weekly: filter view by Week
+   - Modes: single week, up-to week
+   - Bulk delete selected rows in current module
+*/
+(function(){
+  if(window.__WEEK_GROUPING_BULK_DELETE_V1__) return;
+  window.__WEEK_GROUPING_BULK_DELETE_V1__ = true;
+
+  function uniq(arr){var seen={};return arr.filter(function(x){x=String(x||'');if(!x||seen[x])return false;seen[x]=true;return true;});}
+  function weekLabel(v){
+    var s=String(v||'').trim();
+    if(!s) return '';
+    if(/^W\d+$/i.test(s)) return s.toUpperCase();
+    if(/^\d+$/.test(s)) return 'W'+s;
+    return s;
+  }
+  function weekNum(v){
+    var s=String(v||'').trim().toUpperCase();
+    var m=s.match(/W(\d+)/);
+    if(m) return Number(m[1]);
+    var n=Number(s);
+    return isNaN(n)?null:n;
+  }
+
+  // Store filter state in memory + localStorage
+  var FILTER_KEY = 'po_week_filter_v1';
+  window.__weekFilter = window.__weekFilter || (function(){
+    try { return JSON.parse(localStorage.getItem(FILTER_KEY) || '{}') || {}; } catch(e){ return {}; }
+  })();
+
+  function saveWeekFilter(){
+    try { localStorage.setItem(FILTER_KEY, JSON.stringify(window.__weekFilter||{})); } catch(e){}
+  }
+
+  window.getAvailableWeeks = function(){
+    try{
+      var rows = (window.real?real('progress_weekly'):(DB.progress_weekly||[]));
+      var ws = uniq(rows.map(function(r){return weekLabel(r.week_no);}).filter(Boolean));
+      ws.sort(function(a,b){return (weekNum(a)||0)-(weekNum(b)||0);});
+      return ws;
+    }catch(e){return [];}
+  };
+
+  window.renderWeekControls = function(){
+    if(S.mod !== 'progress_weekly') return '';
+    var weeks = getAvailableWeeks();
+    var st = window.__weekFilter || {};
+    if(!st.mode) st.mode = 'single';
+    if(!st.week && weeks.length) st.week = weeks[weeks.length-1];
+
+    var opts = weeks.map(function(w){return '<option value="'+w+'" '+(w===st.week?'selected':'')+'>'+w+'</option>';}).join('');
+    var mode = st.mode;
+    return ''
+      +'<span class="badge" style="background:#eef6ff;border:1px solid #dbe6f4;color:#071f3d">Progress Filter</span>'
+      +'<select class="btn sm" style="max-width:120px" onchange="__weekFilter.week=this.value;saveWeekFilter();renderModule();renderDashboard();">'+opts+'</select>'
+      +'<select class="btn sm" style="max-width:160px" onchange="__weekFilter.mode=this.value;saveWeekFilter();renderModule();renderDashboard();">'
+        +'<option value="single" '+(mode==='single'?'selected':'')+'>Minggu ini saja</option>'
+        +'<option value="upto" '+(mode==='upto'?'selected':'')+'>S/d minggu ini</option>'
+      +'</select>';
+  };
+
+  // Patch getFilteredRows to apply week filter only for progress_weekly
+  if(!window.__oldGetFilteredRows_v1 && window.getFilteredRows){
+    window.__oldGetFilteredRows_v1 = window.getFilteredRows;
+    window.getFilteredRows = function(){
+      var rows = window.__oldGetFilteredRows_v1();
+      if(S.mod !== 'progress_weekly') return rows;
+      var st = window.__weekFilter || {};
+      var w = weekLabel(st.week);
+      var mode = st.mode || 'single';
+      if(!w) return rows;
+      if(mode === 'single'){
+        return rows.filter(function(r){ return weekLabel(r.week_no) === w; });
+      }
+      if(mode === 'upto'){
+        var wn = weekNum(w);
+        if(wn === null) return rows;
+        return rows.filter(function(r){
+          var rn = weekNum(r.week_no);
+          return rn !== null && rn <= wn;
+        });
+      }
+      return rows;
+    };
+  }
+
+  // Add checkbox selection + bulk delete
+  window.__sel = window.__sel || { all:false, ids:{} };
+
+  function getRowId(mod, row, idx){
+    if(mod==='progress_weekly'){
+      return String(row.progress_id || '') || (String(row.area||'')+'|'+String(row.wbs_code||'')+'|'+String(row.work_item||'')+'|'+String(row.week_no||''));
+    }
+    if(mod==='material_control_status') return String(row.mr_item_id||row.display_name||idx);
+    if(mod==='action_plan_tasks') return String(row.task_uid||row.task_name||idx);
+    return String(row.id||row._id||idx);
+  }
+
+  window.toggleSelectAll = function(checked){
+    var mod=S.mod;
+    var rows=getFilteredRows();
+    window.__sel.ids={};
+    rows.forEach(function(r,i){ window.__sel.ids[getRowId(mod,r,i)] = checked; });
+    renderModule();
+  };
+  window.toggleSelectOne = function(id, checked){
+    window.__sel.ids[id]=checked;
+  };
+  window.bulkDeleteSelected = function(){
+    var mod=S.mod;
+    var rows=db(mod);
+    var before = JSON.parse(JSON.stringify(DB));
+    var ids=window.__sel.ids || {};
+    var keep=[];
+    rows.forEach(function(r,i){
+      var id=getRowId(mod,r,i);
+      if(!ids[id]) keep.push(r);
+    });
+    var deleted = rows.length - keep.length;
+    if(!deleted){ toast('warn','Tidak ada baris yang dipilih.'); return; }
+    confirm2('Hapus '+deleted+' baris?','Baris yang dipilih akan dihapus. Disarankan Backup JSON sebelum hapus massal.', function(){
+      DB[mod]=keep;
+      // quick undo snapshot
+      try{ localStorage.setItem('po_undo_bulk_delete_v1', JSON.stringify({ts:new Date().toISOString(), before: before})); }catch(e){}
+      saveDB();
+      window.__sel.ids={};
+      renderModule();
+      renderDashboard();
+      toast('ok','Berhasil menghapus '+deleted+' baris. (Undo tersedia)');
+    });
+  };
+  window.undoBulkDelete = function(){
+    try{
+      var u=JSON.parse(localStorage.getItem('po_undo_bulk_delete_v1')||'null');
+      if(!u||!u.before){ toast('warn','Tidak ada undo snapshot.'); return; }
+      confirm2('Undo delete?','Data akan dikembalikan ke snapshot sebelum delete massal ('+String(u.ts||'')+').', function(){
+        DB=u.before; saveDB(); renderModule(); renderDashboard(); toast('ok','Undo berhasil.');
+      });
+    }catch(e){ toast('err','Undo gagal.'); }
+  };
+
+  // Patch toolbar to show week controls and bulk delete buttons
+  if(!window.__oldBuildModToolbar_v1 && window.buildModToolbar){
+    window.__oldBuildModToolbar_v1 = window.buildModToolbar;
+    window.buildModToolbar = function(){
+      window.__oldBuildModToolbar_v1();
+      try{
+        var el=document.getElementById('modToolbar');
+        if(!el) return;
+        var extra='';
+        if(S.mod==='progress_weekly') extra += renderWeekControls();
+        extra += '<button class="btn sm warn" onclick="undoBulkDelete()">Undo Delete</button>';
+        extra += '<button class="btn sm danger" onclick="bulkDeleteSelected()">Delete Selected</button>';
+        el.insertAdjacentHTML('beforeend', '<span style="display:inline-flex;gap:6px;flex-wrap:wrap;align-items:center">'+extra+'</span>');
+      }catch(e){}
+    };
+  }
+
+  // Patch renderDataView to add checkboxes as first column
+  if(!window.__oldRenderDataView_v1 && window.renderDataView){
+    window.__oldRenderDataView_v1 = window.renderDataView;
+    window.renderDataView = function(){
+      var mod=S.mod;
+      var cols=getCols();
+      var allRows=getFilteredRows();
+      var total=allRows.length;
+      var start=(S.page-1)*S.pageSize;
+      var pageRows=allRows.slice(start,start+S.pageSize);
+
+      var html='';
+      html+='<div class="tbl-toolbar">';
+      html+='<div class="search-wrap"><input class="tbl-search" type="text" placeholder="Cari data proyek..." value="'+esc(S.search)+'" oninput="onSearch(this.value)"></div>';
+      html+='<div class="tbl-actions">';
+      html+='<select class="btn sm" onchange="S.pageSize=Number(this.value);S.page=1;renderDataView()"><option value="25" '+(S.pageSize===25?'selected':'')+'>25</option><option value="50" '+(S.pageSize===50?'selected':'')+'>50</option><option value="100" '+(S.pageSize===100?'selected':'')+'>100</option></select>';
+      html+='<button class="btn sm" onclick="toggleSort()">⇅ Sort</button>';
+      html+='</div></div>';
+
+      html+='<div class="tbl-wrap"><div class="tbl-scroll"><table class="dtbl">';
+      html+='<thead><tr>';
+      html+='<th style="width:34px"><input type="checkbox" onchange="toggleSelectAll(this.checked)"></th>';
+      cols.forEach(function(c){ html+='<th>'+esc(lbl(c))+'</th>'; });
+      html+='<th class="wrap" style="width:140px">Actions</th>';
+      html+='</tr></thead><tbody>';
+
+      pageRows.forEach(function(r,idx){
+        var realIdx = db(mod).indexOf(r);
+        if(realIdx<0) realIdx = start + idx;
+        var id = (function(){
+          var rid = '';
+          try{ rid = String(r.progress_id||r.mr_item_id||r.task_uid||r.id||''); }catch(e){}
+          if(!rid) rid = String(r.area||'')+'|'+String(r.work_item||'')+'|'+String(r.week_no||'')+'|'+String(realIdx);
+          return rid;
+        })();
+        var checked = !!(window.__sel && window.__sel.ids && window.__sel.ids[id]);
+
+        html+='<tr>';
+        html+='<td style="text-align:center"><input type="checkbox" '+(checked?'checked':'')+' onchange="toggleSelectOne(''+esc(id)+'',this.checked)"></td>';
+        cols.forEach(function(c){
+          var v = r[c];
+          var cls = isMoney(c)?'money':isPct(c)?'pct':'';
+          html+='<td class="'+cls+'">'+(isPct(c)?fPct(v):isMoney(c)?fRp(v):esc(v??''))+'</td>';
+        });
+        html+='<td style="text-align:center;white-space:nowrap"><button class="btn xs" onclick="openEditor('+realIdx+')">Edit</button> <button class="btn xs danger" onclick="delRow('+realIdx+')">Hapus</button></td>';
+        html+='</tr>';
+      });
+
+      html+='</tbody></table></div></div>';
+      html+='<div class="tbl-info">'+total+' baris</div>';
+      document.getElementById('modBody').innerHTML=html;
+    };
+  }
 })();
 </script>
 
