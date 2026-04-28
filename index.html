@@ -14058,8 +14058,17 @@ function renderDashboard(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
-  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
+  // Progress KPI logic: SUM per area, then AVG across areas (each area contributes equally)
+  var perArea={};
+  prog.forEach(function(r){
+    var a=String(r.area||'').trim()||'Unassigned';
+    if(!perArea[a]) perArea[a]={plan:0,act:0};
+    perArea[a].plan += num(r.plan_cumulative);
+    perArea[a].act  += num(r.actual_cumulative);
+  });
+  var areas=Object.keys(perArea);
+  var avgPlan=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].plan;},0)/areas.length:0;
+  var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
   var dev=avgAct-avgPlan;
 
   // Hero
@@ -14069,8 +14078,8 @@ function renderDashboard(){
 
   // Hero KPIs
   document.getElementById('heroKpis').innerHTML=[
-    {lbl:'Plan Kum. SUM',val:fPct(avgPlan),sub:'Total target bobot',cls:''},
-    {lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
+    {lbl:'Plan Area Avg',val:fPct(avgPlan),sub:'Target minggu ini',cls:''},
+    {lbl:'Aktual Area Avg',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Deviasi Kum.',val:(dev>=0?'+':'')+fPct(dev),sub:'Plan vs Aktual',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Net Cash',val:'Rp '+fRpShort(ci-co),sub:'In '+fRpShort(ci)+' / Out '+fRpShort(co),cls:'kpi-flat'},
     {lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya',cls:'kpi-flat'},
@@ -14472,8 +14481,8 @@ function renderSlides(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
-  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
+  var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
+  var perArea={};prog.forEach(function(r){var a=String(r.area||'').trim()||'Unassigned';if(!perArea[a]) perArea[a]={plan:0,act:0};perArea[a].plan+=num(r.plan_cumulative);perArea[a].act+=num(r.actual_cumulative);});var areas=Object.keys(perArea);var avgPlan=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].plan;},0)/areas.length:0;
   var dev=avgAct-avgPlan;
   var now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
@@ -14492,7 +14501,7 @@ function renderSlides(){
   // Slide 2: Executive Summary KPI
   html+=slide(1,'Executive Summary — KPI Overview',
     '<div class="ppt-metrics">'
-    +[{lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih total bobot'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
+    +[{lbl:'Aktual Area Avg',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih plan vs aktual'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
 
   // Slide 3: Progress Pekerjaan
   html+=slide(2,'Progress Pekerjaan — Rekapitulasi '+prof.report_period,
@@ -14727,11 +14736,11 @@ function importMsProjectXML(text,fileName){
 }
 function v41PowerBiCardsHTML(){
   var prog=v41Rows('progress_weekly'), cost=v41Rows('cost_control_private'), os=v41Rows('outstanding_list'), risk=v41Rows('risk_issue'), mat=v41Rows('material_control_status');
-  var avgAct=prog.length?prog.reduce(function(a,b){return a+num(b.actual_cumulative||b.progress_percent);},0)/prog.length:0;
+  var perArea={};prog.forEach(function(r){var a=String(r.area||'').trim()||'Unassigned';if(!perArea[a]) perArea[a]={act:0};perArea[a].act+=num(r.actual_cumulative||r.progress_percent);});var areas=Object.keys(perArea);var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
   var ci=cost.filter(function(x){return x.type==='Cash In';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var co=cost.filter(function(x){return x.type==='Cash Out';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var cards=[
-    ['Progress',fPct(avgAct),'Actual cumulative sum','m-blue'],
+    ['Progress',fPct(avgAct),'Actual cumulative average','m-blue'],
     ['Open Items',os.filter(function(x){return x.status==='Open';}).length,'Outstanding requiring closure','m-red'],
     ['Material Risk',mat.filter(function(x){return /High|Delayed|At Risk/i.test(String(x.criticality||x.delivery_status));}).length,'Critical/delayed material','m-orange'],
     ['Net Cash','Rp '+fRpShort(ci-co),'Cash in minus cash out',(ci-co)>=0?'m-green':'m-red'],
@@ -27555,8 +27564,17 @@ function renderDashboard(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
-  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
+  // Progress KPI logic: SUM per area, then AVG across areas (each area contributes equally)
+  var perArea={};
+  prog.forEach(function(r){
+    var a=String(r.area||'').trim()||'Unassigned';
+    if(!perArea[a]) perArea[a]={plan:0,act:0};
+    perArea[a].plan += num(r.plan_cumulative);
+    perArea[a].act  += num(r.actual_cumulative);
+  });
+  var areas=Object.keys(perArea);
+  var avgPlan=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].plan;},0)/areas.length:0;
+  var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
   var dev=avgAct-avgPlan;
 
   // Hero
@@ -27566,8 +27584,8 @@ function renderDashboard(){
 
   // Hero KPIs
   document.getElementById('heroKpis').innerHTML=[
-    {lbl:'Plan Kum. SUM',val:fPct(avgPlan),sub:'Total target bobot',cls:''},
-    {lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
+    {lbl:'Plan Area Avg',val:fPct(avgPlan),sub:'Target minggu ini',cls:''},
+    {lbl:'Aktual Area Avg',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Deviasi Kum.',val:(dev>=0?'+':'')+fPct(dev),sub:'Plan vs Aktual',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Net Cash',val:'Rp '+fRpShort(ci-co),sub:'In '+fRpShort(ci)+' / Out '+fRpShort(co),cls:'kpi-flat'},
     {lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya',cls:'kpi-flat'},
@@ -27969,8 +27987,8 @@ function renderSlides(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
-  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
+  var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
+  var perArea={};prog.forEach(function(r){var a=String(r.area||'').trim()||'Unassigned';if(!perArea[a]) perArea[a]={plan:0,act:0};perArea[a].plan+=num(r.plan_cumulative);perArea[a].act+=num(r.actual_cumulative);});var areas=Object.keys(perArea);var avgPlan=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].plan;},0)/areas.length:0;
   var dev=avgAct-avgPlan;
   var now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
@@ -27989,7 +28007,7 @@ function renderSlides(){
   // Slide 2: Executive Summary KPI
   html+=slide(1,'Executive Summary — KPI Overview',
     '<div class="ppt-metrics">'
-    +[{lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih total bobot'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
+    +[{lbl:'Aktual Area Avg',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih plan vs aktual'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
 
   // Slide 3: Progress Pekerjaan
   html+=slide(2,'Progress Pekerjaan — Rekapitulasi '+prof.report_period,
@@ -28224,11 +28242,11 @@ function importMsProjectXML(text,fileName){
 }
 function v41PowerBiCardsHTML(){
   var prog=v41Rows('progress_weekly'), cost=v41Rows('cost_control_private'), os=v41Rows('outstanding_list'), risk=v41Rows('risk_issue'), mat=v41Rows('material_control_status');
-  var avgAct=prog.length?prog.reduce(function(a,b){return a+num(b.actual_cumulative||b.progress_percent);},0)/prog.length:0;
+  var perArea={};prog.forEach(function(r){var a=String(r.area||'').trim()||'Unassigned';if(!perArea[a]) perArea[a]={act:0};perArea[a].act+=num(r.actual_cumulative||r.progress_percent);});var areas=Object.keys(perArea);var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
   var ci=cost.filter(function(x){return x.type==='Cash In';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var co=cost.filter(function(x){return x.type==='Cash Out';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var cards=[
-    ['Progress',fPct(avgAct),'Actual cumulative sum','m-blue'],
+    ['Progress',fPct(avgAct),'Actual cumulative average','m-blue'],
     ['Open Items',os.filter(function(x){return x.status==='Open';}).length,'Outstanding requiring closure','m-red'],
     ['Material Risk',mat.filter(function(x){return /High|Delayed|At Risk/i.test(String(x.criticality||x.delivery_status));}).length,'Critical/delayed material','m-orange'],
     ['Net Cash','Rp '+fRpShort(ci-co),'Cash in minus cash out',(ci-co)>=0?'m-green':'m-red'],
@@ -41244,8 +41262,17 @@ function renderDashboard(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
-  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
+  // Progress KPI logic: SUM per area, then AVG across areas (each area contributes equally)
+  var perArea={};
+  prog.forEach(function(r){
+    var a=String(r.area||'').trim()||'Unassigned';
+    if(!perArea[a]) perArea[a]={plan:0,act:0};
+    perArea[a].plan += num(r.plan_cumulative);
+    perArea[a].act  += num(r.actual_cumulative);
+  });
+  var areas=Object.keys(perArea);
+  var avgPlan=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].plan;},0)/areas.length:0;
+  var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
   var dev=avgAct-avgPlan;
 
   // Hero
@@ -41255,8 +41282,8 @@ function renderDashboard(){
 
   // Hero KPIs
   document.getElementById('heroKpis').innerHTML=[
-    {lbl:'Plan Kum. SUM',val:fPct(avgPlan),sub:'Total target bobot',cls:''},
-    {lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
+    {lbl:'Plan Area Avg',val:fPct(avgPlan),sub:'Target minggu ini',cls:''},
+    {lbl:'Aktual Area Avg',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Deviasi Kum.',val:(dev>=0?'+':'')+fPct(dev),sub:'Plan vs Aktual',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Net Cash',val:'Rp '+fRpShort(ci-co),sub:'In '+fRpShort(ci)+' / Out '+fRpShort(co),cls:'kpi-flat'},
     {lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya',cls:'kpi-flat'},
@@ -41614,8 +41641,8 @@ function renderSlides(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
-  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
+  var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
+  var perArea={};prog.forEach(function(r){var a=String(r.area||'').trim()||'Unassigned';if(!perArea[a]) perArea[a]={plan:0,act:0};perArea[a].plan+=num(r.plan_cumulative);perArea[a].act+=num(r.actual_cumulative);});var areas=Object.keys(perArea);var avgPlan=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].plan;},0)/areas.length:0;
   var dev=avgAct-avgPlan;
   var now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
@@ -41634,7 +41661,7 @@ function renderSlides(){
   // Slide 2: Executive Summary KPI
   html+=slide(1,'Executive Summary — KPI Overview',
     '<div class="ppt-metrics">'
-    +[{lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih total bobot'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
+    +[{lbl:'Aktual Area Avg',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih plan vs aktual'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
 
   // Slide 3: Progress Pekerjaan
   html+=slide(2,'Progress Pekerjaan — Rekapitulasi '+prof.report_period,
@@ -41869,11 +41896,11 @@ function importMsProjectXML(text,fileName){
 }
 function v41PowerBiCardsHTML(){
   var prog=v41Rows('progress_weekly'), cost=v41Rows('cost_control_private'), os=v41Rows('outstanding_list'), risk=v41Rows('risk_issue'), mat=v41Rows('material_control_status');
-  var avgAct=prog.length?prog.reduce(function(a,b){return a+num(b.actual_cumulative||b.progress_percent);},0)/prog.length:0;
+  var perArea={};prog.forEach(function(r){var a=String(r.area||'').trim()||'Unassigned';if(!perArea[a]) perArea[a]={act:0};perArea[a].act+=num(r.actual_cumulative||r.progress_percent);});var areas=Object.keys(perArea);var avgAct=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;
   var ci=cost.filter(function(x){return x.type==='Cash In';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var co=cost.filter(function(x){return x.type==='Cash Out';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var cards=[
-    ['Progress',fPct(avgAct),'Actual cumulative sum','m-blue'],
+    ['Progress',fPct(avgAct),'Actual cumulative average','m-blue'],
     ['Open Items',os.filter(function(x){return x.status==='Open';}).length,'Outstanding requiring closure','m-red'],
     ['Material Risk',mat.filter(function(x){return /High|Delayed|At Risk/i.test(String(x.criticality||x.delivery_status));}).length,'Critical/delayed material','m-orange'],
     ['Net Cash','Rp '+fRpShort(ci-co),'Cash in minus cash out',(ci-co)>=0?'m-green':'m-red'],
@@ -41995,7 +42022,7 @@ function v43KpiBlock(b){
   var source=b.source||'dashboard', rows=v43ModuleRows(source), cards=[];
   if(source==='dashboard'){
     var prog=v43ModuleRows('progress_weekly'), cost=v43ModuleRows('cost_control_private'), os=v43ModuleRows('outstanding_list'), mat=v43ModuleRows('material_control_status');
-    var avg=prog.length?prog.reduce((a,x)=>a+num(x.actual_cumulative),0)/prog.length:0;var ci=cost.filter(x=>x.type==='Cash In').reduce((a,x)=>a+num(x.amount_rupiah),0);var co=cost.filter(x=>x.type==='Cash Out').reduce((a,x)=>a+num(x.amount_rupiah),0);
+    var perArea={};prog.forEach(function(r){var a=String(r.area||'').trim()||'Unassigned';if(!perArea[a]) perArea[a]={act:0};perArea[a].act+=num(r.actual_cumulative);});var areas=Object.keys(perArea);var avg=areas.length?areas.reduce(function(acc,k){return acc+perArea[k].act;},0)/areas.length:0;var ci=cost.filter(x=>x.type==='Cash In').reduce((a,x)=>a+num(x.amount_rupiah),0);var co=cost.filter(x=>x.type==='Cash Out').reduce((a,x)=>a+num(x.amount_rupiah),0);
     cards=[['Actual Progress',fPct(avg)],['Open Outstanding',os.filter(x=>x.status==='Open').length],['Material Critical',mat.filter(x=>x.criticality==='High').length],['Net Balance',v43Money(ci-co)]];
   }else if(source==='cost_control_private'){
     var ci2=rows.filter(x=>x.type==='Cash In').reduce((a,x)=>a+num(x.amount_rupiah),0), co2=rows.filter(x=>x.type==='Cash Out').reduce((a,x)=>a+num(x.amount_rupiah),0), ctg=rows.filter(x=>x.type==='Cash To Go').reduce((a,x)=>a+num(x.amount_rupiah),0);
@@ -44480,16 +44507,6 @@ body.v11-file-mode .v11-file-note{display:block}
   bootPatch();
   document.addEventListener('DOMContentLoaded',function(){setTimeout(bootPatch,900);setTimeout(bootPatch,2000);});
 })();
-</script>
-
-
-<script id="progress-sum-calculation-note-v1">
-/* PROGRESS SUM FIX v1
-   Dashboard progress calculation changed from average to SUM.
-   Reason: PLAN KUMULATIF % BOBOT and AKTUAL KUMULATIF % BOBOT are weighted cumulative contributions,
-   so dashboard totals must be SUM(plan_cumulative) and SUM(actual_cumulative), not average per row.
-*/
-window.__PROGRESS_SUM_FIX_V1__ = true;
 </script>
 
 </body>
