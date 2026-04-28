@@ -437,6 +437,11 @@ a{color:var(--blue);text-decoration:none}
   .v42-gantt-row { grid-template-columns: 1fr !important; }
 }
 /* === END LAYOUT OVERFLOW FIX v1 === */
+
+/* === BULK_DELETE_OVERLAY_V1 === */
+.bd-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dtbl th.selcol,.dtbl td.selcol{width:34px;text-align:center}
+/* === END BULK_DELETE_OVERLAY_V1 === */
 </style>
 
 <style>
@@ -44861,5 +44866,250 @@ body.v11-file-mode .v11-file-note{display:block}
 })();
 </script>
 
+
+<script id="BULK_DELETE_OVERLAY_JS_V1">
+(function(){
+  if(window.__BD_OV1__) return;
+  window.__BD_OV1__=true;
+
+  function qs(){return new URLSearchParams(location.search||'');}
+  if(qs().get('nobulk')==='1') return;
+
+  var STORE_KEY='bd_undo_v1';
+  window.__bd = window.__bd || { sel:{}, lastMod:null };
+
+  function getSel(mod){
+    if(!window.__bd.sel[mod]) window.__bd.sel[mod]={};
+    return window.__bd.sel[mod];
+  }
+
+  function rowId(r, idx){
+    var key = String(r.id||r.uuid||r.progress_id||r.task_id||r.mr_no||r.spk_no||'').trim();
+    if(key) return 'id|'+key;
+    return 'i|'+String(idx);
+  }
+
+  function currentRows(){
+    try{return (typeof getFilteredRows==='function')?getFilteredRows():[];}catch(e){return []}
+  }
+
+  function supportsMod(mod){
+    if(!mod) return false;
+    if(mod==='dashboard') return false;
+    if(mod==='report') return false;
+    // Only modules with DB arrays
+    try{ return Array.isArray(DB[mod]); }catch(e){ return false; }
+  }
+
+  function injectToolbar(){
+    try{
+      if(!supportsMod(S.mod)) return;
+      var tb=document.getElementById('modToolbar');
+      if(!tb) return;
+      if(document.getElementById('bdDelBtn')) return;
+      tb.insertAdjacentHTML('beforeend',
+        '<span class="bd-actions" style="margin-left:10px">'
+        +'<button class="btn sm danger" id="bdDelBtn" onclick="bulkDeleteSelected()">Delete Selected</button>'
+        +'<button class="btn sm warn" id="bdUndoBtn" onclick="undoBulkDelete()">Undo Delete</button>'
+        +'</span>'
+      );
+    }catch(e){}
+  }
+
+  function addCheckboxColumn(){
+    try{
+      if(!supportsMod(S.mod)) return;
+      // only when the main data table is present
+      var tbl=document.querySelector('#modBody table.dtbl');
+      if(!tbl) return;
+      if(tbl.querySelector('th.selcol')) return;
+
+      var thead=tbl.querySelector('thead tr');
+      if(!thead) return;
+      var th=document.createElement('th');
+      th.className='selcol';
+      th.innerHTML='<input type="checkbox" id="bdSelAll">';
+      thead.insertBefore(th, thead.firstChild);
+
+      var sel=getSel(S.mod);
+      var bodyRows=[...tbl.querySelectorAll('tbody tr')];
+      bodyRows.forEach(function(tr, i){
+        // ignore empty message row
+        if(tr.querySelectorAll('td').length<=1) return;
+        var td=document.createElement('td');
+        td.className='selcol';
+        // map to real index: we can use the row number cell + paging, but easiest is stable by filtered row index
+        // We'll store by filtered index in current view, and resolve to DB index at delete time.
+        var rid='v|'+String(i);
+        var checked=!!sel[rid];
+        td.innerHTML='<input type="checkbox" '+(checked?'checked':'')+' data-bd-rid="'+rid+'">';
+        tr.insertBefore(td, tr.firstChild);
+      });
+
+      var selAll=tbl.querySelector('#bdSelAll');
+      if(selAll){
+        selAll.addEventListener('change', function(){
+          var rows=[...tbl.querySelectorAll('tbody input[type=checkbox][data-bd-rid]')];
+          rows.forEach(function(cb){cb.checked=selAll.checked; sel[cb.getAttribute('data-bd-rid')]=selAll.checked;});
+        });
+      }
+
+      tbl.addEventListener('change', function(e){
+        var t=e.target;
+        if(t && t.getAttribute && t.getAttribute('data-bd-rid')){
+          sel[t.getAttribute('data-bd-rid')] = !!t.checked;
+        }
+      });
+
+    }catch(e){}
+  }
+
+  window.bulkDeleteSelected = function(){
+    try{
+      var mod=S.mod;
+      if(!supportsMod(mod)) return toast('warn','Module tidak mendukung bulk delete.');
+
+      var filtered = currentRows();
+      var sel=getSel(mod);
+      var selectedIdxs=[];
+      // view-index selection (v|i)
+      filtered.forEach(function(r, i){
+        if(sel['v|'+String(i)]) selectedIdxs.push(i);
+      });
+      if(!selectedIdxs.length) return toast('warn','Tidak ada baris yang dipilih.');
+
+      confirm2('Hapus '+selectedIdxs.length+' baris?','Baris yang dipilih akan dihapus. (Undo tersedia)', function(){
+        var before = DB[mod].slice();
+        // delete by object identity: remove rows that are in selected filtered set
+        var toDelete = new Set(selectedIdxs.map(function(i){return filtered[i];}));
+        DB[mod] = DB[mod].filter(function(r){return !toDelete.has(r);});
+        try{localStorage.setItem(STORE_KEY, JSON.stringify({ts:new Date().toISOString(), mod:mod, before:before}));}catch(e){}
+        try{saveDB();}catch(e){}
+        window.__bd.sel[mod] = {};
+        renderModule();
+        try{renderDashboard();}catch(e){}
+        toast('ok','Berhasil menghapus '+selectedIdxs.length+' baris.');
+      });
+    }catch(e){ toast('err','Bulk delete gagal.'); }
+  };
+
+  window.undoBulkDelete = function(){
+    try{
+      var u=JSON.parse(localStorage.getItem(STORE_KEY)||'null');
+      if(!u||!u.before||!u.mod) return toast('warn','Tidak ada undo.');
+      confirm2('Undo delete?','Kembalikan data sebelum delete massal?', function(){
+        DB[u.mod]=u.before;
+        try{saveDB();}catch(e){}
+        renderModule();
+        try{renderDashboard();}catch(e){}
+        toast('ok','Undo berhasil.');
+      });
+    }catch(e){ toast('err','Undo gagal.'); }
+  };
+
+  // Observe changes to modBody and modToolbar so we can inject without overriding render functions
+  function boot(){
+    try{
+      injectToolbar();
+      addCheckboxColumn();
+      var mo=new MutationObserver(function(){
+        injectToolbar();
+        addCheckboxColumn();
+      });
+      var body=document.getElementById('modBody');
+      var tb=document.getElementById('modToolbar');
+      if(body) mo.observe(body,{childList:true,subtree:true});
+      if(tb) mo.observe(tb,{childList:true,subtree:true});
+    }catch(e){}
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+})();
+</script>
+
+<script id="BULK_DELETE_CONTEXT_BAR_V2">
+(function(){
+  if(window.__BD_CTX2__) return;
+  window.__BD_CTX2__=true;
+
+  function supports(){
+    try{
+      if(!window.S || !S.mod) return false;
+      if(S.mod==='dashboard' || S.mod==='report') return false;
+      if(!window.DB || !Array.isArray(DB[S.mod])) return false;
+      return true;
+    }catch(e){return false;}
+  }
+
+  function ensureBar(){
+    try{
+      if(!supports()) return;
+      var body=document.getElementById('modBody');
+      if(!body) return;
+      var bar=document.getElementById('bdCtxBar');
+      if(bar) return;
+
+      var html=''
+        +'<div id="bdCtxBar" style="display:none;position:sticky;top:0;z-index:50;margin:10px 0;padding:10px 12px;border:1px solid #d7e3f2;border-radius:12px;background:#f7fbff;" >'
+        + '  <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">'
+        + '    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
+        + '      <span class="badge" style="background:#0b66ff;color:#fff;border:none">Selection</span>'
+        + '      <b id="bdSelCount">0</b><span style="color:#5b6b7d">item dipilih</span>'
+        + '    </div>'
+        + '    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+        + '      <button class="btn sm" id="bdClearSel">Clear</button>'
+        + '      <button class="btn sm danger" id="bdCtxDel">Delete Selected</button>'
+        + '      <button class="btn sm warn" id="bdCtxUndo">Undo Delete</button>'
+        + '    </div>'
+        + '  </div>'
+        +'</div>';
+
+      body.insertAdjacentHTML('afterbegin', html);
+      document.getElementById('bdClearSel').onclick=function(){
+        try{
+          document.querySelectorAll('#modBody table.dtbl input[type=checkbox][data-bd-rid]').forEach(function(cb){cb.checked=false;});
+          var all=document.getElementById('bdSelAll');
+          if(all) all.checked=false;
+          if(window.__bd && window.__bd.sel && window.__bd.sel[S.mod]) window.__bd.sel[S.mod] = {};
+        }catch(e){}
+      };
+      document.getElementById('bdCtxDel').onclick=function(){ if(window.bulkDeleteSelected) window.bulkDeleteSelected(); };
+      document.getElementById('bdCtxUndo').onclick=function(){ if(window.undoBulkDelete) window.undoBulkDelete(); };
+    }catch(e){}
+  }
+
+  function countChecked(){
+    try{
+      var cbs=document.querySelectorAll('#modBody table.dtbl input[type=checkbox][data-bd-rid]');
+      var n=0;
+      cbs.forEach(function(cb){ if(cb.checked) n++; });
+      return n;
+    }catch(e){return 0;}
+  }
+
+  function refresh(){
+    try{
+      var bar=document.getElementById('bdCtxBar');
+      if(!bar) return;
+      if(!supports()) { bar.style.display='none'; return; }
+      var n=countChecked();
+      var cnt=document.getElementById('bdSelCount');
+      if(cnt) cnt.textContent=String(n);
+      bar.style.display = n>0 ? 'block' : 'none';
+    }catch(e){}
+  }
+
+  function loop(){
+    ensureBar();
+    refresh();
+  }
+
+  // brute-force polling: stable across rerenders
+  setInterval(loop, 250);
+
+})();
+</script>
 </body>
 </html>
