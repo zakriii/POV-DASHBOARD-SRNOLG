@@ -45029,87 +45029,98 @@ body.v11-file-mode .v11-file-note{display:block}
 })();
 </script>
 
-<script id="BULK_DELETE_CONTEXT_BAR_V2">
+<script id="BULK_DELETE_FLOATING_BAR_V4">
 (function(){
-  if(window.__BD_CTX2__) return;
-  window.__BD_CTX2__=true;
+  if(window.__BD_FLOAT_V4__) return;
+  window.__BD_FLOAT_V4__ = true;
 
-  function supports(){
+  function rowCheckboxes(){
     try{
-      if(!window.S || !S.mod) return false;
-      if(S.mod==='dashboard' || S.mod==='report') return false;
-      if(!window.DB || !Array.isArray(DB[S.mod])) return false;
-      return true;
-    }catch(e){return false;}
+      var all = Array.prototype.slice.call(document.querySelectorAll('table.dtbl input[type="checkbox"]'));
+      return all.filter(function(cb){ return cb.id !== 'bdSelAll'; });
+    }catch(e){ return []; }
   }
 
-  function ensureBar(){
+  function checkedBoxes(){
+    return rowCheckboxes().filter(function(cb){ return cb.checked; });
+  }
+
+  function syncStore(){
     try{
-      if(!supports()) return;
-      var body=document.getElementById('modBody');
-      if(!body) return;
-      var bar=document.getElementById('bdCtxBar');
-      if(bar) return;
-
-      var html=''
-        +'<div id="bdCtxBar" style="display:none;position:sticky;top:0;z-index:50;margin:10px 0;padding:10px 12px;border:1px solid #d7e3f2;border-radius:12px;background:#f7fbff;" >'
-        + '  <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">'
-        + '    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'
-        + '      <span class="badge" style="background:#0b66ff;color:#fff;border:none">Selection</span>'
-        + '      <b id="bdSelCount">0</b><span style="color:#5b6b7d">item dipilih</span>'
-        + '    </div>'
-        + '    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
-        + '      <button class="btn sm" id="bdClearSel">Clear</button>'
-        + '      <button class="btn sm danger" id="bdCtxDel">Delete Selected</button>'
-        + '      <button class="btn sm warn" id="bdCtxUndo">Undo Delete</button>'
-        + '    </div>'
-        + '  </div>'
-        +'</div>';
-
-      body.insertAdjacentHTML('afterbegin', html);
-      document.getElementById('bdClearSel').onclick=function(){
-        try{
-          document.querySelectorAll('#modBody table.dtbl input[type=checkbox][data-bd-rid]').forEach(function(cb){cb.checked=false;});
-          var all=document.getElementById('bdSelAll');
-          if(all) all.checked=false;
-          if(window.__bd && window.__bd.sel && window.__bd.sel[S.mod]) window.__bd.sel[S.mod] = {};
-        }catch(e){}
-      };
-      document.getElementById('bdCtxDel').onclick=function(){ if(window.bulkDeleteSelected) window.bulkDeleteSelected(); };
-      document.getElementById('bdCtxUndo').onclick=function(){ if(window.undoBulkDelete) window.undoBulkDelete(); };
+      if(!window.S || !S.mod) return;
+      if(!window.__bd) window.__bd = {sel:{}};
+      if(!window.__bd.sel) window.__bd.sel = {};
+      if(!window.__bd.sel[S.mod]) window.__bd.sel[S.mod] = {};
+      var sel = window.__bd.sel[S.mod];
+      Object.keys(sel).forEach(function(k){ sel[k] = false; });
+      rowCheckboxes().forEach(function(cb, i){
+        var rid = cb.getAttribute('data-bd-rid') || cb.dataset.bdRid || cb.value || String(i);
+        sel[rid] = !!cb.checked;
+      });
     }catch(e){}
   }
 
-  function countChecked(){
-    try{
-      var cbs=document.querySelectorAll('#modBody table.dtbl input[type=checkbox][data-bd-rid]');
-      var n=0;
-      cbs.forEach(function(cb){ if(cb.checked) n++; });
-      return n;
-    }catch(e){return 0;}
+  function ensureBar(){
+    var bar = document.getElementById('bdFloatBar');
+    if(bar) return bar;
+    var html = ''
+      + '<div id="bdFloatBar" style="display:none;position:fixed;right:24px;bottom:24px;z-index:2147483647;max-width:min(620px,calc(100vw - 32px));padding:12px 14px;border:1px solid #bcd7ff;border-radius:16px;background:#ffffff;box-shadow:0 18px 55px rgba(9,30,66,.28);font-family:inherit;">'
+      + '  <div style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">'
+      + '    <div style="display:flex;gap:8px;align-items:center;font-weight:900;color:#0b1f3a">'
+      + '      <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:10px;background:#0b66ff;color:#fff">✓</span>'
+      + '      <span><b id="bdFloatCount">0</b> item dipilih</span>'
+      + '    </div>'
+      + '    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+      + '      <button class="btn sm" id="bdFloatClear" type="button">Clear</button>'
+      + '      <button class="btn sm danger" id="bdFloatDelete" type="button">Delete Selected</button>'
+      + '      <button class="btn sm warn" id="bdFloatUndo" type="button">Undo Delete</button>'
+      + '    </div>'
+      + '  </div>'
+      + '</div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    bar = document.getElementById('bdFloatBar');
+
+    document.getElementById('bdFloatClear').onclick = function(){
+      try{
+        rowCheckboxes().forEach(function(cb){ cb.checked = false; });
+        var all = document.getElementById('bdSelAll');
+        if(all) all.checked = false;
+        if(window.S && S.mod && window.__bd && window.__bd.sel) window.__bd.sel[S.mod] = {};
+      }catch(e){}
+      refresh();
+    };
+
+    document.getElementById('bdFloatDelete').onclick = function(){
+      syncStore();
+      if(window.bulkDeleteSelected) window.bulkDeleteSelected();
+      setTimeout(refresh, 300);
+    };
+
+    document.getElementById('bdFloatUndo').onclick = function(){
+      if(window.undoBulkDelete) window.undoBulkDelete();
+      setTimeout(refresh, 300);
+    };
+    return bar;
   }
 
   function refresh(){
     try{
-      var bar=document.getElementById('bdCtxBar');
-      if(!bar) return;
-      if(!supports()) { bar.style.display='none'; return; }
-      var n=countChecked();
-      var cnt=document.getElementById('bdSelCount');
-      if(cnt) cnt.textContent=String(n);
-      bar.style.display = n>0 ? 'block' : 'none';
+      var bar = ensureBar();
+      var n = checkedBoxes().length;
+      var cnt = document.getElementById('bdFloatCount');
+      if(cnt) cnt.textContent = String(n);
+      bar.style.display = n > 0 ? 'block' : 'none';
+      syncStore();
     }catch(e){}
   }
 
-  function loop(){
-    ensureBar();
-    refresh();
-  }
-
-  // brute-force polling: stable across rerenders
-  setInterval(loop, 250);
-
+  document.addEventListener('change', function(){ setTimeout(refresh, 0); }, true);
+  document.addEventListener('click', function(){ setTimeout(refresh, 0); }, true);
+  setInterval(refresh, 250);
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', refresh);
+  else refresh();
 })();
 </script>
+
 </body>
 </html>
