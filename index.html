@@ -14058,8 +14058,8 @@ function renderDashboard(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgPlan=prog.length?prog.reduce((a,b)=>a+num(b.plan_cumulative),0)/prog.length:0;
-  var avgAct=prog.length?prog.reduce((a,b)=>a+num(b.actual_cumulative),0)/prog.length:0;
+  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
+  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
   var dev=avgAct-avgPlan;
 
   // Hero
@@ -14069,8 +14069,8 @@ function renderDashboard(){
 
   // Hero KPIs
   document.getElementById('heroKpis').innerHTML=[
-    {lbl:'Plan Kum. Avg',val:fPct(avgPlan),sub:'Target minggu ini',cls:''},
-    {lbl:'Aktual Kum. Avg',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
+    {lbl:'Plan Kum. SUM',val:fPct(avgPlan),sub:'Total target bobot',cls:''},
+    {lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Deviasi Kum.',val:(dev>=0?'+':'')+fPct(dev),sub:'Plan vs Aktual',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Net Cash',val:'Rp '+fRpShort(ci-co),sub:'In '+fRpShort(ci)+' / Out '+fRpShort(co),cls:'kpi-flat'},
     {lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya',cls:'kpi-flat'},
@@ -14472,8 +14472,8 @@ function renderSlides(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgAct=prog.length?prog.reduce((a,b)=>a+num(b.actual_cumulative),0)/prog.length:0;
-  var avgPlan=prog.length?prog.reduce((a,b)=>a+num(b.plan_cumulative),0)/prog.length:0;
+  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
+  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
   var dev=avgAct-avgPlan;
   var now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
@@ -14492,7 +14492,7 @@ function renderSlides(){
   // Slide 2: Executive Summary KPI
   html+=slide(1,'Executive Summary — KPI Overview',
     '<div class="ppt-metrics">'
-    +[{lbl:'Aktual Kum. Avg',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih plan vs aktual'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
+    +[{lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih total bobot'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
 
   // Slide 3: Progress Pekerjaan
   html+=slide(2,'Progress Pekerjaan — Rekapitulasi '+prof.report_period,
@@ -14731,7 +14731,7 @@ function v41PowerBiCardsHTML(){
   var ci=cost.filter(function(x){return x.type==='Cash In';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var co=cost.filter(function(x){return x.type==='Cash Out';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var cards=[
-    ['Progress',fPct(avgAct),'Actual cumulative average','m-blue'],
+    ['Progress',fPct(avgAct),'Actual cumulative sum','m-blue'],
     ['Open Items',os.filter(function(x){return x.status==='Open';}).length,'Outstanding requiring closure','m-red'],
     ['Material Risk',mat.filter(function(x){return /High|Delayed|At Risk/i.test(String(x.criticality||x.delivery_status));}).length,'Critical/delayed material','m-orange'],
     ['Net Cash','Rp '+fRpShort(ci-co),'Cash in minus cash out',(ci-co)>=0?'m-green':'m-red'],
@@ -27555,8 +27555,8 @@ function renderDashboard(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgPlan=prog.length?prog.reduce((a,b)=>a+num(b.plan_cumulative),0)/prog.length:0;
-  var avgAct=prog.length?prog.reduce((a,b)=>a+num(b.actual_cumulative),0)/prog.length:0;
+  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
+  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
   var dev=avgAct-avgPlan;
 
   // Hero
@@ -27566,8 +27566,8 @@ function renderDashboard(){
 
   // Hero KPIs
   document.getElementById('heroKpis').innerHTML=[
-    {lbl:'Plan Kum. Avg',val:fPct(avgPlan),sub:'Target minggu ini',cls:''},
-    {lbl:'Aktual Kum. Avg',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
+    {lbl:'Plan Kum. SUM',val:fPct(avgPlan),sub:'Total target bobot',cls:''},
+    {lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Deviasi Kum.',val:(dev>=0?'+':'')+fPct(dev),sub:'Plan vs Aktual',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Net Cash',val:'Rp '+fRpShort(ci-co),sub:'In '+fRpShort(ci)+' / Out '+fRpShort(co),cls:'kpi-flat'},
     {lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya',cls:'kpi-flat'},
@@ -27969,8 +27969,8 @@ function renderSlides(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgAct=prog.length?prog.reduce((a,b)=>a+num(b.actual_cumulative),0)/prog.length:0;
-  var avgPlan=prog.length?prog.reduce((a,b)=>a+num(b.plan_cumulative),0)/prog.length:0;
+  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
+  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
   var dev=avgAct-avgPlan;
   var now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
@@ -27989,7 +27989,7 @@ function renderSlides(){
   // Slide 2: Executive Summary KPI
   html+=slide(1,'Executive Summary — KPI Overview',
     '<div class="ppt-metrics">'
-    +[{lbl:'Aktual Kum. Avg',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih plan vs aktual'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
+    +[{lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih total bobot'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
 
   // Slide 3: Progress Pekerjaan
   html+=slide(2,'Progress Pekerjaan — Rekapitulasi '+prof.report_period,
@@ -28228,7 +28228,7 @@ function v41PowerBiCardsHTML(){
   var ci=cost.filter(function(x){return x.type==='Cash In';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var co=cost.filter(function(x){return x.type==='Cash Out';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var cards=[
-    ['Progress',fPct(avgAct),'Actual cumulative average','m-blue'],
+    ['Progress',fPct(avgAct),'Actual cumulative sum','m-blue'],
     ['Open Items',os.filter(function(x){return x.status==='Open';}).length,'Outstanding requiring closure','m-red'],
     ['Material Risk',mat.filter(function(x){return /High|Delayed|At Risk/i.test(String(x.criticality||x.delivery_status));}).length,'Critical/delayed material','m-orange'],
     ['Net Cash','Rp '+fRpShort(ci-co),'Cash in minus cash out',(ci-co)>=0?'m-green':'m-red'],
@@ -41244,8 +41244,8 @@ function renderDashboard(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgPlan=prog.length?prog.reduce((a,b)=>a+num(b.plan_cumulative),0)/prog.length:0;
-  var avgAct=prog.length?prog.reduce((a,b)=>a+num(b.actual_cumulative),0)/prog.length:0;
+  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
+  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
   var dev=avgAct-avgPlan;
 
   // Hero
@@ -41255,8 +41255,8 @@ function renderDashboard(){
 
   // Hero KPIs
   document.getElementById('heroKpis').innerHTML=[
-    {lbl:'Plan Kum. Avg',val:fPct(avgPlan),sub:'Target minggu ini',cls:''},
-    {lbl:'Aktual Kum. Avg',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
+    {lbl:'Plan Kum. SUM',val:fPct(avgPlan),sub:'Total target bobot',cls:''},
+    {lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:dev>=0?'▲ On Track':'▼ Behind Schedule',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Deviasi Kum.',val:(dev>=0?'+':'')+fPct(dev),sub:'Plan vs Aktual',cls:dev>=0?'kpi-up':'kpi-down'},
     {lbl:'Net Cash',val:'Rp '+fRpShort(ci-co),sub:'In '+fRpShort(ci)+' / Out '+fRpShort(co),cls:'kpi-flat'},
     {lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya',cls:'kpi-flat'},
@@ -41614,8 +41614,8 @@ function renderSlides(){
   var ci=cost.filter(x=>x.type==='Cash In').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var co=cost.filter(x=>x.type==='Cash Out').reduce((a,b)=>a+num(b.amount_rupiah),0);
   var ctg=cost.filter(x=>x.type==='Cash To Go').reduce((a,b)=>a+num(b.amount_rupiah),0);
-  var avgAct=prog.length?prog.reduce((a,b)=>a+num(b.actual_cumulative),0)/prog.length:0;
-  var avgPlan=prog.length?prog.reduce((a,b)=>a+num(b.plan_cumulative),0)/prog.length:0;
+  var avgAct=prog.reduce((a,b)=>a+num(b.actual_cumulative),0);
+  var avgPlan=prog.reduce((a,b)=>a+num(b.plan_cumulative),0);
   var dev=avgAct-avgPlan;
   var now=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 
@@ -41634,7 +41634,7 @@ function renderSlides(){
   // Slide 2: Executive Summary KPI
   html+=slide(1,'Executive Summary — KPI Overview',
     '<div class="ppt-metrics">'
-    +[{lbl:'Aktual Kum. Avg',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih plan vs aktual'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
+    +[{lbl:'Aktual Kum. SUM',val:fPct(avgAct),sub:'vs Plan '+fPct(avgPlan)},{lbl:'Deviasi',val:(dev>=0?'+':'')+fPct(dev),sub:'Selisih total bobot'},{lbl:'Cash In',val:'Rp '+fRpShort(ci),sub:'Total pembayaran masuk'},{lbl:'Cash Out',val:'Rp '+fRpShort(co),sub:'Total pembayaran keluar'},{lbl:'Cash To Go',val:'Rp '+fRpShort(ctg),sub:'Estimasi sisa biaya'},{lbl:'Net Balance',val:'Rp '+fRpShort(ci-co),sub:ci-co>0?'Positif':'Perhatian'},{lbl:'Outstanding Open',val:os.filter(x=>x.status==='Open').length+' items',sub:'Perlu tindak lanjut'},{lbl:'Material Critical',val:mat.filter(x=>x.criticality==='High').length+' items',sub:'High criticality'},].map(k=>'<div class="ppt-box"><b>'+k.val+'</b><span>'+esc(k.lbl)+'</span><span style="font-size:8.5px;margin-top:2px;color:#888">'+k.sub+'</span></div>').join('')+'</div>');
 
   // Slide 3: Progress Pekerjaan
   html+=slide(2,'Progress Pekerjaan — Rekapitulasi '+prof.report_period,
@@ -41873,7 +41873,7 @@ function v41PowerBiCardsHTML(){
   var ci=cost.filter(function(x){return x.type==='Cash In';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var co=cost.filter(function(x){return x.type==='Cash Out';}).reduce(function(a,b){return a+num(b.amount_rupiah);},0);
   var cards=[
-    ['Progress',fPct(avgAct),'Actual cumulative average','m-blue'],
+    ['Progress',fPct(avgAct),'Actual cumulative sum','m-blue'],
     ['Open Items',os.filter(function(x){return x.status==='Open';}).length,'Outstanding requiring closure','m-red'],
     ['Material Risk',mat.filter(function(x){return /High|Delayed|At Risk/i.test(String(x.criticality||x.delivery_status));}).length,'Critical/delayed material','m-orange'],
     ['Net Cash','Rp '+fRpShort(ci-co),'Cash in minus cash out',(ci-co)>=0?'m-green':'m-red'],
@@ -44161,6 +44161,335 @@ body.v11-file-mode .v11-file-note{display:block}
   window.init=function(){if(prevInit)prevInit();boot()};
   document.addEventListener('DOMContentLoaded',function(){setTimeout(boot,850)});
 })();
+</script>
+
+
+<script id="mr-drive-final-patch-v13">
+/* === FINAL PATCH v13 — MR Excel Parser + Google Drive saveRows sync ===
+   Purpose:
+   1) Read FORM PENGAJUAN MR metadata completely:
+      Delivery Address, Project Reference, MR Date Diajukan, Expected Date On Site,
+      Department, Status, No. SPMK, signers, and item rows.
+   2) Fix Sync Drive error: Unknown action: saveRows.
+   3) Keep DB backward-compatible. Existing fields are not deleted or renamed.
+*/
+(function(){
+  var PATCH_ID = 'mr-drive-final-patch-v13';
+  if(window.__MR_DRIVE_FINAL_PATCH_V13__) return;
+  window.__MR_DRIVE_FINAL_PATCH_V13__ = true;
+
+  function safeToast(type,msg){ try{ if(window.toast) toast(type,msg); else console.log(type,msg); }catch(e){ console.log(type,msg); } }
+  function safeEsc(s){ try{ return window.esc ? esc(s) : String(s||'').replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];}); }catch(e){ return String(s||''); } }
+  function nval(v){ if(v===null||v===undefined) return ''; return String(v).trim(); }
+  function isoDate(v){
+    if(v===''||v===null||v===undefined)return '';
+    if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+    var n=Number(v);
+    if(!isNaN(n) && n>25000 && n<70000 && window.XLSX && XLSX.SSF){
+      var d=XLSX.SSF.parse_date_code(n);
+      if(d) return String(d.y).padStart(4,'0')+'-'+String(d.m).padStart(2,'0')+'-'+String(d.d).padStart(2,'0');
+    }
+    var s=String(v).trim();
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+    var dt=new Date(s);
+    if(!isNaN(dt) && s.length>=6) return dt.toISOString().slice(0,10);
+    return s;
+  }
+  function cell(ws,r,c){
+    try{
+      var addr=XLSX.utils.encode_cell({r:r,c:c});
+      var x=ws[addr];
+      if(!x) return '';
+      if(x.t==='d') return isoDate(x.v);
+      if(x.v!==undefined && x.v!==null) return String(x.v).trim();
+      if(x.w!==undefined && x.w!==null) return String(x.w).trim();
+    }catch(e){}
+    return '';
+  }
+  function cellDate(ws,r,c){ return isoDate(cell(ws,r,c)); }
+  function normKey(s){ return String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
+  function qtyNum(v){ var n=Number(String(v||'').replace(/,/g,'.').replace(/[^0-9.\-]/g,'')); return isNaN(n)?0:n; }
+
+  function findValue(ws,range,labelRe,opt){
+    opt=opt||{};
+    var maxR=Math.min(range.e.r,opt.maxRow||80);
+    for(var r=range.s.r; r<=maxR; r++){
+      for(var c=range.s.c; c<=range.e.c; c++){
+        var label=cell(ws,r,c);
+        if(!labelRe.test(label)) continue;
+        var coords=[];
+        // below same column first, because many MR forms use label above value
+        for(var rr=r+1; rr<=Math.min(range.e.r,r+4); rr++) coords.push([rr,c]);
+        // right on same row
+        for(var cc=c+1; cc<=Math.min(range.e.c,c+8); cc++) coords.push([r,cc]);
+        // below/right block
+        for(var rr2=r+1; rr2<=Math.min(range.e.r,r+4); rr2++){
+          for(var cc2=c+1; cc2<=Math.min(range.e.c,c+8); cc2++) coords.push([rr2,cc2]);
+        }
+        for(var i=0;i<coords.length;i++){
+          var v=opt.date?cellDate(ws,coords[i][0],coords[i][1]):cell(ws,coords[i][0],coords[i][1]);
+          if(!v) continue;
+          if(labelRe.test(String(v))) continue;
+          if(opt.date && !/^\d{4}-\d{2}-\d{2}$/.test(v)) continue;
+          if(opt.reject && opt.reject.test(String(v))) continue;
+          return v;
+        }
+      }
+    }
+    return '';
+  }
+
+  function findMRNo(ws,range){
+    for(var r=range.s.r; r<=Math.min(range.e.r,25); r++){
+      for(var c=range.s.c; c<=range.e.c; c++){
+        var v=cell(ws,r,c);
+        var m=String(v).match(/MR[-–][A-Z0-9][A-Z0-9\-–\/]+/i);
+        if(m) return m[0].replace(/–/g,'-');
+      }
+    }
+    return findValue(ws,range,/no\.?\s*mr|mr\s*no/i) || 'FORM-MR';
+  }
+
+  function findHeader(ws,range){
+    for(var r=range.s.r; r<=Math.min(range.e.r,80); r++){
+      var cols={};
+      for(var c=range.s.c; c<=range.e.c; c++){
+        var k=normKey(cell(ws,r,c));
+        if(/^(itemno|noitem|item|itemnumber)$/.test(k)) cols.item=c;
+        else if(/^(qty|quantity|jumlah)$/.test(k)) cols.qty=c;
+        else if(/^(mou|uom|unit|satuan)$/.test(k)) cols.unit=c;
+        else if(k.indexOf('description')>=0 || k.indexOf('specification')>=0 || k.indexOf('deskripsi')>=0) cols.desc=c;
+        else if(k.indexOf('size')>=0 || k.indexOf('model')>=0 || k.indexOf('partnumber')>=0 || k.indexOf('part')>=0) cols.model=c;
+        else if(k.indexOf('totalprice')>=0) cols.total_price=c;
+        else if(k.indexOf('price')>=0 && k.indexOf('total')<0) cols.unit_price=c;
+        else if(k==='coa') cols.coa=c;
+      }
+      if(cols.qty!==undefined && cols.desc!==undefined) return {row:r,cols:cols};
+    }
+    return {row:7,cols:{item:0,qty:1,unit:2,desc:3,model:4,unit_price:5,total_price:6,coa:7}};
+  }
+
+  function badMaterialName(s){
+    s=String(s||'').trim().toLowerCase();
+    if(!s) return true;
+    return /^(requested by|approved by|ttd digital|general admin|site manager|project manager|proejct manager|operational manager|operation manager|grand total|total|delivery address|project reference|department|status|no\.?\s*mr|request date|expected delivery date|expected date on site|item no|qty|mou|description|e\.g|detail specification)/i.test(s);
+  }
+  function likelyPersonName(s){
+    s=String(s||'').trim();
+    if(!s) return false;
+    if(/ttd|digital|manager|admin|requested|approved|grand total|detail specification/i.test(s)) return false;
+    if(!/[A-Za-z]/.test(s)) return false;
+    var words=s.split(/\s+/).filter(Boolean);
+    return words.length>=2 && words.length<=6 && s===s.toUpperCase();
+  }
+  function findSigners(ws,range){
+    var signers=[];
+    for(var r=range.s.r; r<=Math.min(range.e.r,120); r++){
+      for(var c=range.s.c; c<=range.e.c; c++){
+        var label=cell(ws,r,c);
+        if(!/requested by|approved by/i.test(label)) continue;
+        var type=/requested/i.test(label)?'Requested by':'Approved by';
+        var name='', role='', nameCol=-1;
+        for(var cc=c+1; cc<=Math.min(range.e.c,c+8); cc++){
+          var candidate=cell(ws,r,cc);
+          if(likelyPersonName(candidate)){ name=candidate; nameCol=cc; break; }
+        }
+        if(name){
+          for(var rr=r+1; rr<=Math.min(range.e.r,r+3); rr++){
+            var rv=cell(ws,rr,nameCol);
+            if(rv && !likelyPersonName(rv) && !/ttd|digital/i.test(rv)){ role=rv; break; }
+          }
+          signers.push({type:type,name:name,role:role});
+        }
+      }
+    }
+    var seen={};
+    return signers.filter(function(s){ var k=s.type+'|'+s.name+'|'+s.role; if(seen[k]) return false; seen[k]=true; return true; });
+  }
+
+  function readMRMeta(ws,range,fileName){
+    var mrNo=findMRNo(ws,range);
+    var mrDate=findValue(ws,range,/request\s*date|mr\s*date|tanggal\s*mr|tanggal\s*diajukan|tanggal\s*pengajuan/i,{date:true});
+    var expected=findValue(ws,range,/expected\s*delivery\s*date|expected\s*date\s*on\s*site|date\s*on\s*site|delivery\s*date|tanggal\s*site|tanggal\s*onsite/i,{date:true});
+    return {
+      mr_no:mrNo,
+      delivery_address:findValue(ws,range,/delivery\s*address|alamat\s*pengiriman/i,{reject:/no\.?\s*mr/i}),
+      project_reference:findValue(ws,range,/project\s*reference|referensi\s*proyek/i),
+      mr_date:mrDate,
+      request_date:mrDate,
+      expected_date_on_site:expected,
+      expected_delivery_date:expected,
+      department:findValue(ws,range,/department|departemen/i,{reject:/status|no\.?\s*spmk/i}),
+      mr_status:findValue(ws,range,/^status$/i,{reject:/no\.?\s*spmk/i}),
+      no_spmk:findValue(ws,range,/no\.?\s*spmk|spmk/i),
+      source_file:fileName||''
+    };
+  }
+
+  function ensureMetaFields(){
+    try{
+      if(!window.DB) return;
+      DB.material_control_status = DB.material_control_status || [];
+      DB.material_control_status.forEach(function(row){
+        ['delivery_address','project_reference','expected_date_on_site','expected_delivery_date','department','mr_status','no_spmk','request_date'].forEach(function(k){ if(row[k]===undefined) row[k]=''; });
+      });
+      if(window.LBL){
+        LBL.delivery_address='Delivery Address';
+        LBL.project_reference='Project Reference';
+        LBL.expected_date_on_site='Expected Date On Site';
+        LBL.expected_delivery_date='Expected Delivery Date';
+        LBL.department='Department';
+        LBL.mr_status='Status MR';
+        LBL.no_spmk='No. SPMK';
+        LBL.request_date='MR Date Diajukan';
+      }
+      if(window.COLS && COLS.material_control_status){
+        var p=COLS.material_control_status.planning || [];
+        ['mr_no','mr_date','expected_date_on_site','delivery_address','department','mr_status','no_spmk','po_no','vendor','eta','due_date','pic'].forEach(function(k){ if(p.indexOf(k)<0) p.push(k); });
+        COLS.material_control_status.planning=p;
+        var d=COLS.material_control_status.detail || [];
+        ['material_name','category','discipline','specification','unit','project_reference','source_file'].forEach(function(k){ if(d.indexOf(k)<0) d.push(k); });
+        COLS.material_control_status.detail=d;
+      }
+    }catch(e){ console.warn(PATCH_ID, e); }
+  }
+
+  window.openMRImport=function(){
+    var title=document.getElementById('drawerTitle'); if(title) title.textContent='Import FORM PENGAJUAN MR — Parser Lengkap';
+    var save=document.getElementById('drawerSaveBtn'); if(save) save.style.display='none';
+    var body=document.getElementById('drawerBody');
+    if(body){
+      body.innerHTML=''
+        +'<p style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:12px">Upload FORM PENGAJUAN MR.xlsx. Parser ini membaca metadata lengkap: Delivery Address, No. MR, Project Reference, MR Date Diajukan, Expected Date On Site, Department, Status, No. SPMK, signer, dan item material.</p>'
+        +'<div class="import-zone" onclick="document.getElementById(\'mrFileIn\').click()">'
+        +'<strong>Pilih FORM PENGAJUAN MR.xlsx</strong>Smart parser lengkap untuk template MR'
+        +'</div>'
+        +'<input type="file" id="mrFileIn" accept=".xlsx,.xls" style="display:none" onchange="handleMRFile(event)">'
+        +'<div class="import-log" id="mrLog"></div>';
+    }
+    var foot=document.getElementById('drawerFoot'); if(foot) foot.innerHTML='<button class="btn" onclick="closeDrawer()">Tutup</button>';
+    if(window.openDrawer) openDrawer();
+  };
+
+  window.handleMRFile=function(e){
+    var f=e && e.target && e.target.files ? e.target.files[0] : null;
+    if(!f) return;
+    var log=document.getElementById('mrLog');
+    if(log){ log.className='import-log show'; log.innerHTML=''; }
+    var reader=new FileReader();
+    reader.onload=function(evt){
+      try{
+        var wb=XLSX.read(new Uint8Array(evt.target.result),{type:'array',cellDates:false});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var range=XLSX.utils.decode_range(ws['!ref']);
+        var meta=readMRMeta(ws,range,f.name);
+        var header=findHeader(ws,range);
+        var cols=header.cols;
+        var signers=findSigners(ws,range);
+        var requestedBy=(signers.find(function(s){return s.type==='Requested by';})||{}).name||'';
+        var approvers=signers.filter(function(s){return s.type==='Approved by';}).map(function(s){return s.name;});
+        function addLog(cls,msg){ if(log) log.innerHTML+='<span class="'+cls+'">'+safeEsc(msg)+'</span>\n'; }
+        addLog('log-info','[INFO] MR No: '+(meta.mr_no||'-'));
+        addLog('log-info','[INFO] Delivery Address: '+(meta.delivery_address||'-'));
+        addLog('log-info','[INFO] MR Date Diajukan: '+(meta.mr_date||'-')+' | Expected Date On Site: '+(meta.expected_date_on_site||'-'));
+        addLog('log-info','[INFO] Department: '+(meta.department||'-')+' | Status: '+(meta.mr_status||'-')+' | No. SPMK: '+(meta.no_spmk||'-'));
+        addLog('log-info','[INFO] Project Reference: '+((meta.project_reference||'-').slice(0,160)));
+        addLog('log-info','[INFO] Item Header Row: '+(header.row+1));
+
+        var newRows=[];
+        for(var rr=header.row+1; rr<=Math.min(range.e.r,header.row+150); rr++){
+          var item=cell(ws,rr,cols.item!==undefined?cols.item:0);
+          var qtyRaw=cell(ws,rr,cols.qty!==undefined?cols.qty:1);
+          var qty=qtyNum(qtyRaw);
+          var unit=cols.unit!==undefined?cell(ws,rr,cols.unit):'';
+          var desc=cell(ws,rr,cols.desc!==undefined?cols.desc:3);
+          var model=cols.model!==undefined?cell(ws,rr,cols.model):'';
+          var unitPrice=cols.unit_price!==undefined?qtyNum(cell(ws,rr,cols.unit_price)):0;
+          var totalPrice=cols.total_price!==undefined?qtyNum(cell(ws,rr,cols.total_price)):0;
+          var coa=cols.coa!==undefined?cell(ws,rr,cols.coa):'';
+          var rowText=[item,qtyRaw,unit,desc,model,coa].join(' ').trim();
+          if(/grand\s*total|requested\s*by|approved\s*by|e\.g|detail specification/i.test(rowText)) break;
+          if(qty<=0 || badMaterialName(desc)) continue;
+          newRows.push({
+            mr_item_id:meta.mr_no+'-'+String(newRows.length+1).padStart(2,'0'),
+            mr_no:meta.mr_no,
+            item_no:item||String(newRows.length+1),
+            material_name:desc,
+            display_name:meta.mr_no+' '+desc,
+            area:'Unassigned',category:'From MR',discipline:'',specification:model,unit:unit,
+            required_qty:qty,qty_mr:qty,qty_po:0,qty_on_site:0,qty_installed:0,
+            qty_available:0,remaining_delivery:qty,remaining_install:qty,
+            mr_date:meta.mr_date,request_date:meta.request_date,planning_date:meta.expected_date_on_site,
+            expected_date_on_site:meta.expected_date_on_site,expected_delivery_date:meta.expected_delivery_date,
+            delivery_address:meta.delivery_address,project_reference:meta.project_reference,
+            department:meta.department,mr_status:meta.mr_status,no_spmk:meta.no_spmk,
+            unit_price_rupiah:unitPrice,total_price_rupiah:totalPrice,coa:coa,
+            pr_no:'',po_no:'',vendor:'',eta:meta.expected_date_on_site,due_date:meta.expected_date_on_site,
+            delivery_status:'Need Manual Update',criticality:'High',warehouse_location:'',inspection_status:'Pending',pic:requestedBy,
+            requested_by:requestedBy,approved_by:approvers.join(', '),signer_names:signers.map(function(s){return s.name;}).join(', '),signer_roles:signers.map(function(s){return s.role;}).filter(Boolean).join(', '),signature_status:'Waiting QR Signature',
+            required_action:'Follow up PR/PO/vendor dan update delivery actual',source_file:f.name
+          });
+        }
+        if(!newRows.length) throw new Error('Tidak ada item valid. Pastikan kolom Item No / Qty / Description terbaca.');
+        if(!window.DB) throw new Error('Database DB tidak ditemukan. Refresh halaman lalu coba lagi.');
+        DB.material_control_status=DB.material_control_status||[];
+        ensureMetaFields();
+        DB.material_control_status.push.apply(DB.material_control_status,newRows);
+        DB.material_request=DB.material_request||[];
+        DB.material_request.push({
+          mr_id:meta.mr_no,mr_no:meta.mr_no,request_date:meta.request_date,mr_date:meta.mr_date,
+          expected_delivery_date:meta.expected_date_on_site,expected_date_on_site:meta.expected_date_on_site,
+          delivery_address:meta.delivery_address,project_reference:meta.project_reference,department:meta.department,mr_status:meta.mr_status,no_spmk:meta.no_spmk,
+          requested_by:requestedBy,approved_by:approvers.join(', '),signer_names:signers.map(function(s){return s.name;}).join(', '),signature_status:'Waiting QR Signature',status:'Imported',source_file:f.name,item_count:newRows.length
+        });
+        if(window.saveDB) saveDB();
+        if(window.renderModule) renderModule();
+        if(window.renderDashboard) renderDashboard();
+        addLog('log-ok','[OK] '+newRows.length+' item berhasil diimport lengkap dengan metadata MR.');
+        safeToast('ok','Import MR selesai: '+newRows.length+' item dari '+f.name);
+      }catch(err){
+        if(log) log.innerHTML+='<span class="log-err">[ERROR] '+safeEsc(err.message)+'</span>\n';
+        safeToast('err','Import MR gagal: '+err.message);
+      }
+    };
+    reader.readAsArrayBuffer(f);
+  };
+
+  if(!window.__ORIGINAL_CALL_API_V13__) window.__ORIGINAL_CALL_API_V13__ = window.callApi;
+  window.callApi = async function(payload){
+    if(!window.CFG || !CFG.API_URL || CFG.API_URL.includes('PASTE_')) return {ok:false,localOnly:true,error:'API belum dikonfigurasi'};
+    payload = payload || {};
+    payload.token = CFG.API_TOKEN;
+    try{
+      var r = await fetch(CFG.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+      return await r.json();
+    }catch(e){return {ok:false,error:e.message};}
+  };
+  window.syncModule = async function(mod){
+    if(!window.CFG || !CFG.API_URL){ safeToast('warn','API belum dikonfigurasi. Buka konfigurasi Drive.'); return; }
+    safeToast('info','Menyinkronkan '+mod+'...');
+    try{
+      var rows=(window.real?real(mod):(DB[mod]||[])).map(function(r){var o={};Object.assign(o,r);return o;});
+      var res=await window.callApi({action:'saveRows',module:mod,rows:rows});
+      if(res.ok) safeToast('ok','Sync berhasil: '+mod+' ('+(res.rows||rows.length)+' baris)');
+      else safeToast('err','Sync gagal: '+(res.error||res.message||'Unknown error'));
+    }catch(e){ safeToast('err','Sync error: '+e.message); }
+  };
+
+  function bootPatch(){ ensureMetaFields(); try{ if(window.saveDB) saveDB(); }catch(e){} }
+  bootPatch();
+  document.addEventListener('DOMContentLoaded',function(){setTimeout(bootPatch,900);setTimeout(bootPatch,2000);});
+})();
+</script>
+
+
+<script id="progress-sum-calculation-note-v1">
+/* PROGRESS SUM FIX v1
+   Dashboard progress calculation changed from average to SUM.
+   Reason: PLAN KUMULATIF % BOBOT and AKTUAL KUMULATIF % BOBOT are weighted cumulative contributions,
+   so dashboard totals must be SUM(plan_cumulative) and SUM(actual_cumulative), not average per row.
+*/
+window.__PROGRESS_SUM_FIX_V1__ = true;
 </script>
 
 </body>
