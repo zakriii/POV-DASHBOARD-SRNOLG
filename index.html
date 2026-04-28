@@ -437,14 +437,6 @@ a{color:var(--blue);text-decoration:none}
   .v42-gantt-row { grid-template-columns: 1fr !important; }
 }
 /* === END LAYOUT OVERFLOW FIX v1 === */
-
-/* === PROGRESS_WEEKLY_UI_PATCH_V1 === */
-.tbl-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.week-filter{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
-.week-filter .btn.sm{padding:6px 10px}
-.dtbl th.selcol,.dtbl td.selcol{width:34px;text-align:center}
-.dtbl td{max-width:320px;overflow:hidden;text-overflow:ellipsis}
-/* === END PROGRESS_WEEKLY_UI_PATCH_V1 === */
 </style>
 
 <style>
@@ -13892,24 +13884,8 @@ function buildModToolbar(){
   if(mod==='material_control_status')html+='<button class="btn sm" onclick="openMRImport()">Import MR</button>';
   html+='<button class="btn sm" onclick="openImportDrawer()">⬆ Import Excel/CSV</button>';
   html+='<button class="btn sm" onclick="exportModuleExcel()">⬇ Export Excel</button>';
-  html+='<button class="btn sm dark" onclick="syncModule(''+mod+'')">☁ Sync Drive</button>';
-
-  if(mod==='progress_weekly'){
-    html+='<span class="week-filter">'
-      +'<span class="badge" style="background:#eef6ff;border:1px solid #dbe6f4;color:#071f3d">Week</span>'
-      +'<select class="btn sm" id="wkSel" onchange="setWeekFilter(this.value)"></select>'
-      +'<select class="btn sm" id="wkMode" onchange="setWeekMode(this.value)">'
-        +'<option value="single">Minggu ini saja</option>'
-        +'<option value="upto">S/d minggu ini</option>'
-      +'</select>'
-    +'</span>';
-  }
-
-  html+='<button class="btn sm danger" onclick="bulkDeleteSelected()">Delete Selected</button>';
-  html+='<button class="btn sm warn" onclick="undoBulkDelete()">Undo Delete</button>';
-
+  html+='<button class="btn sm dark" onclick="syncModule(\''+mod+'\')">☁ Sync Drive</button>';
   document.getElementById('modToolbar').innerHTML=html;
-  if(mod==='progress_weekly') initWeekControls();
 }
 
 function setSub(s){S.sub=s;S.page=1;S.search='';renderModule();}
@@ -27467,24 +27443,8 @@ function buildModToolbar(){
   if(mod==='material_control_status')html+='<button class="btn sm" onclick="openMRImport()">Import MR</button>';
   html+='<button class="btn sm" onclick="openImportDrawer()">⬆ Import Excel/CSV</button>';
   html+='<button class="btn sm" onclick="exportModuleExcel()">⬇ Export Excel</button>';
-  html+='<button class="btn sm dark" onclick="syncModule(''+mod+'')">☁ Sync Drive</button>';
-
-  if(mod==='progress_weekly'){
-    html+='<span class="week-filter">'
-      +'<span class="badge" style="background:#eef6ff;border:1px solid #dbe6f4;color:#071f3d">Week</span>'
-      +'<select class="btn sm" id="wkSel" onchange="setWeekFilter(this.value)"></select>'
-      +'<select class="btn sm" id="wkMode" onchange="setWeekMode(this.value)">'
-        +'<option value="single">Minggu ini saja</option>'
-        +'<option value="upto">S/d minggu ini</option>'
-      +'</select>'
-    +'</span>';
-  }
-
-  html+='<button class="btn sm danger" onclick="bulkDeleteSelected()">Delete Selected</button>';
-  html+='<button class="btn sm warn" onclick="undoBulkDelete()">Undo Delete</button>';
-
+  html+='<button class="btn sm dark" onclick="syncModule(\''+mod+'\')">☁ Sync Drive</button>';
   document.getElementById('modToolbar').innerHTML=html;
-  if(mod==='progress_weekly') initWeekControls();
 }
 
 function setSub(s){S.sub=s;S.page=1;S.search='';renderModule();}
@@ -41195,24 +41155,8 @@ function buildModToolbar(){
   if(mod==='material_control_status')html+='<button class="btn sm" onclick="openMRImport()">Import MR</button>';
   html+='<button class="btn sm" onclick="openImportDrawer()">⬆ Import Excel/CSV</button>';
   html+='<button class="btn sm" onclick="exportModuleExcel()">⬇ Export Excel</button>';
-  html+='<button class="btn sm dark" onclick="syncModule(''+mod+'')">☁ Sync Drive</button>';
-
-  if(mod==='progress_weekly'){
-    html+='<span class="week-filter">'
-      +'<span class="badge" style="background:#eef6ff;border:1px solid #dbe6f4;color:#071f3d">Week</span>'
-      +'<select class="btn sm" id="wkSel" onchange="setWeekFilter(this.value)"></select>'
-      +'<select class="btn sm" id="wkMode" onchange="setWeekMode(this.value)">'
-        +'<option value="single">Minggu ini saja</option>'
-        +'<option value="upto">S/d minggu ini</option>'
-      +'</select>'
-    +'</span>';
-  }
-
-  html+='<button class="btn sm danger" onclick="bulkDeleteSelected()">Delete Selected</button>';
-  html+='<button class="btn sm warn" onclick="undoBulkDelete()">Undo Delete</button>';
-
+  html+='<button class="btn sm dark" onclick="syncModule(\''+mod+'\')">☁ Sync Drive</button>';
   document.getElementById('modToolbar').innerHTML=html;
-  if(mod==='progress_weekly') initWeekControls();
 }
 
 function setSub(s){S.sub=s;S.page=1;S.search='';renderModule();}
@@ -44917,171 +44861,5 @@ body.v11-file-mode .v11-file-note{display:block}
 })();
 </script>
 
-
-<script id="PROGRESS_WEEKLY_SELECTION_AND_WEEKFILTER_V1">
-(function(){
-  if(window.__PW_PATCH_V1__) return;
-  window.__PW_PATCH_V1__ = true;
-  window.__sel = window.__sel || { ids:{} };
-
-  function wkLabel(v){
-    var s=String(v||'').trim();
-    if(!s) return '';
-    if(/^W\d+$/i.test(s)) return s.toUpperCase();
-    if(/^\d+$/.test(s)) return 'W'+s;
-    return s;
-  }
-  function wkNum(v){
-    var s=wkLabel(v);
-    var m=s.match(/W(\d+)/);
-    if(m) return Number(m[1]);
-    var n=Number(s);
-    return isNaN(n)?null:n;
-  }
-
-  var KEY='pw_week_filter_v1';
-  window.__wk = window.__wk || (function(){
-    try{return JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){return {};}
-  })();
-  function save(){ try{localStorage.setItem(KEY, JSON.stringify(window.__wk||{}));}catch(e){} }
-
-  window.setWeekFilter = function(w){ window.__wk.week=wkLabel(w); save(); S.page=1; renderModule(); renderDashboard(); };
-  window.setWeekMode   = function(m){ window.__wk.mode=m;        save(); S.page=1; renderModule(); renderDashboard(); };
-
-  window.initWeekControls = function(){
-    try{
-      var rows=db('progress_weekly')||[];
-      var weeks={};
-      rows.forEach(function(r){ var w=wkLabel(r.week_no); if(w) weeks[w]=true; });
-      var wlist=Object.keys(weeks);
-      wlist.sort(function(a,b){ return (wkNum(a)||0)-(wkNum(b)||0); });
-      if(!window.__wk.week && wlist.length) window.__wk.week=wlist[wlist.length-1];
-      if(!window.__wk.mode) window.__wk.mode='single';
-      save();
-      var sel=document.getElementById('wkSel');
-      var mode=document.getElementById('wkMode');
-      if(sel){ sel.innerHTML=wlist.map(function(w){return '<option value="'+w+'" '+(w===window.__wk.week?'selected':'')+'>'+w+'</option>';}).join(''); }
-      if(mode){ mode.value=window.__wk.mode; }
-    }catch(e){}
-  };
-
-  if(!window.__oldGetFilteredRows_pw && window.getFilteredRows){
-    window.__oldGetFilteredRows_pw = window.getFilteredRows;
-    window.getFilteredRows = function(){
-      var rows = window.__oldGetFilteredRows_pw();
-      if(S.mod!=='progress_weekly') return rows;
-      var w = wkLabel((window.__wk||{}).week);
-      var mode=(window.__wk||{}).mode||'single';
-      if(!w) return rows;
-      if(mode==='single') return rows.filter(function(r){ return wkLabel(r.week_no)===w; });
-      if(mode==='upto'){
-        var wn=wkNum(w); if(wn===null) return rows;
-        return rows.filter(function(r){ var rn=wkNum(r.week_no); return rn!==null && rn<=wn; });
-      }
-      return rows;
-    };
-  }
-
-  function rowId(r, realIdx){
-    var pid=String(r.progress_id||'').trim();
-    if(pid) return 'pw|'+pid;
-    return 'pw|'+String(r.area||'')+'|'+String(r.work_item||'')+'|'+String(r.week_no||'')+'|'+String(realIdx);
-  }
-
-  window.toggleSelectAll = function(checked){
-    var rows=getFilteredRows();
-    window.__sel.ids={};
-    rows.forEach(function(r){
-      var idx=db(S.mod).indexOf(r);
-      window.__sel.ids[rowId(r, idx)] = checked;
-    });
-    renderModule();
-  };
-  window.toggleSelectOne = function(id, checked){ window.__sel.ids[id]=checked; };
-
-  window.bulkDeleteSelected = function(){
-    var mod=S.mod;
-    var rows=db(mod);
-    var ids=(window.__sel||{}).ids||{};
-    var keep=[];
-    rows.forEach(function(r){
-      var idx=db(mod).indexOf(r);
-      var id=rowId(r, idx);
-      if(!ids[id]) keep.push(r);
-    });
-    var deleted = rows.length - keep.length;
-    if(!deleted){ toast('warn','Tidak ada baris yang dipilih.'); return; }
-    confirm2('Hapus '+deleted+' baris?','Baris yang dipilih akan dihapus. (Undo tersedia)', function(){
-      try{ localStorage.setItem('pw_undo_bulk_v1', JSON.stringify({ts:new Date().toISOString(), mod:mod, before:rows})); }catch(e){}
-      DB[mod]=keep;
-      saveDB();
-      window.__sel.ids={};
-      renderModule(); renderDashboard();
-      toast('ok','Berhasil menghapus '+deleted+' baris.');
-    });
-  };
-  window.undoBulkDelete = function(){
-    try{
-      var u=JSON.parse(localStorage.getItem('pw_undo_bulk_v1')||'null');
-      if(!u||!u.before){ toast('warn','Tidak ada undo.'); return; }
-      confirm2('Undo delete?','Kembalikan data sebelum delete massal ('+String(u.ts||'')+')?', function(){
-        DB[u.mod]=u.before;
-        saveDB();
-        renderModule(); renderDashboard();
-        toast('ok','Undo berhasil.');
-      });
-    }catch(e){ toast('err','Undo gagal.'); }
-  };
-
-  if(!window.__oldRenderDataView_pw && window.renderDataView){
-    window.__oldRenderDataView_pw = window.renderDataView;
-    window.renderDataView = function(){
-      var cols=getCols();
-      var allRows=getFilteredRows();
-      var total=allRows.length;
-      var start=(S.page-1)*S.pageSize;
-      var pageRows=allRows.slice(start,start+S.pageSize);
-      var html='';
-      html+='<div class="tbl-toolbar">';
-      html+='<div class="search-wrap"><input class="tbl-search" type="text" placeholder="Cari data proyek..." value="'+esc(S.search)+'" oninput="onSearch(this.value)"></div>';
-      html+='<div class="tbl-actions">';
-      html+='<select class="btn sm" onchange="S.pageSize=Number(this.value);S.page=1;renderDataView()"><option value="25" '+(S.pageSize===25?'selected':'')+'>25</option><option value="50" '+(S.pageSize===50?'selected':'')+'>50</option><option value="100" '+(S.pageSize===100?'selected':'')+'>100</option><option value="999">Semua</option></select>';
-      html+='</div></div>';
-
-      html+='<div class="tbl-wrap"><div class="tbl-scroll"><table class="dtbl"><thead><tr>';
-      html+='<th class="selcol"><input type="checkbox" onchange="toggleSelectAll(this.checked)"></th>';
-      html+='<th style="width:34px">#</th>';
-      cols.forEach(function(c){
-        var sc=S.sort.col===c;
-        html+='<th class="'+(sc?'sorted-'+(S.sort.dir>0?'asc':'desc'):'')+'" onclick="doSort(\''+c+'\')" title="'+esc(lbl(c))+'">'+esc(lbl(c))+'</th>';
-      });
-      html+='<th style="width:80px;text-align:center">Aksi</th></tr></thead><tbody>';
-
-      if(!pageRows.length){
-        html+='<tr><td colspan="'+(cols.length+3)+'" style="text-align:center;padding:24px;color:var(--muted);font-weight:700">Tidak ada data</td></tr>';
-      } else {
-        pageRows.forEach(function(r,i){
-          var realIdx=db(S.mod).indexOf(r);
-          var id=rowId(r, realIdx);
-          var checked=!!(window.__sel.ids||{})[id];
-          html+='<tr>';
-          html+='<td class="selcol"><input type="checkbox" '+(checked?'checked':'')+' onchange="toggleSelectOne(\''+esc(id)+'\',this.checked)"></td>';
-          html+='<td class="num" style="color:var(--muted)">'+(start+i+1)+'</td>';
-          cols.forEach(function(c){
-            var v=r[c];
-            var cls=cellCls(c);
-            html+='<td class="'+cls+'">'+fmtCell(c,v)+'</td>';
-          });
-          html+='<td style="text-align:center;white-space:nowrap"><button class="btn xs" onclick="openEditor('+realIdx+')">Edit</button> <button class="btn xs danger" onclick="delRow('+realIdx+')">Hapus</button></td>';
-          html+='</tr>';
-        });
-      }
-
-      html+='</tbody></table></div></div><div class="tbl-info">'+total+' baris</div>';
-      document.getElementById('modBody').innerHTML=html;
-    };
-  }
-})();
-</script>
 </body>
 </html>
